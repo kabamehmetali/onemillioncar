@@ -31,3 +31,43 @@ Website and admin panel for a car sales consultant. Plain PHP 8, MySQL, Bootstra
 Home · Inventory (filters, sorting, pagination) · Vehicle detail (gallery, specs, payment calculator, inquiry / test-drive form) · About · Services · Financing (calculator + pre-approval) · Trade-In (appraisal form) · Testimonials · FAQ · Contact · Privacy · sitemap.xml / robots.txt
 
 See `CLAUDE.md` for the code layout.
+
+## Automatic cPanel deployment
+
+This repository includes cPanel push deployment in `.cpanel.yml`. Every push to
+GitHub's `main` branch runs `.github/workflows/cpanel-deploy.yml`, which pushes
+the same commit to a cPanel-managed Git repository. cPanel's post-receive hook
+then runs `tools/cpanel-deploy.sh` and publishes the application to
+`$HOME/public_html`.
+
+The deployment deliberately preserves these production-only files:
+
+- `includes/config.php` (database credentials and production settings)
+- `uploads/vehicles/` (photos uploaded from the admin panel)
+
+### One-time setup
+
+1. In **cPanel → Files → Git Version Control**, create a new, empty repository
+   outside `public_html`, for example `/home/CPANEL_USER/repositories/onemillioncar`.
+   Do not clone GitHub into it; GitHub Actions will push to this repository.
+2. If the website's document root is not `/home/CPANEL_USER/public_html`, change
+   the path in `.cpanel.yml` before the first deployment.
+3. Create a dedicated, passphrase-free SSH deployment key. Import and authorize
+   its public key in **cPanel → Security → SSH Access**.
+4. In the GitHub repository, open **Settings → Secrets and variables → Actions**
+   and add these repository secrets:
+   - `CPANEL_REPOSITORY_URL`: the cPanel repository's SSH clone URL shown by
+     Git Version Control.
+   - `CPANEL_SSH_PRIVATE_KEY`: the complete private deployment key, including
+     its BEGIN/END lines.
+   - `CPANEL_SSH_KNOWN_HOSTS`: the verified SSH host-key line for the cPanel
+     server. Obtain it from the hosting provider or verify the output of
+     `ssh-keyscan -p 22 CPANEL_HOST` before saving it.
+5. Before the first deployment, create `public_html/includes/config.php` from
+   `includes/config.sample.php`, enter the production database credentials, and
+   import `sql/schema.sql` and `sql/seed.sql` through phpMyAdmin or the terminal.
+6. Push to `main`, or run **Deploy to cPanel** manually from GitHub's Actions
+   tab. cPanel deployment logs are stored under `~/.cpanel/logs/`.
+
+No public webhook PHP endpoint is required. GitHub's push event starts the
+workflow, and cPanel's managed Git hook performs the deployment.

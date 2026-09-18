@@ -48,7 +48,7 @@ $hero = [
     'text'   => 'Because I retail what I buy instead of sending it to auction, I can pay closer to what your car is actually worth. Firm offer within 24 hours.',
     'buttons' => [['label' => 'Get my offer', 'url' => '#appraisal']],
     'crumbs' => ['Trade-In' => null],
-    'focus'  => '55% 25%',
+    'focus'  => '55% 6%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';
