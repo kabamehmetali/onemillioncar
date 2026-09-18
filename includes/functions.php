@@ -203,11 +203,14 @@ function phone_href(string $phone): string
 
 /* ---------------------------------------------------------------- settings */
 
-/** @return array<string, string> */
-function settings_all(): array
+/**
+ * @param bool $refresh Re-read the table, e.g. straight after settings_save().
+ * @return array<string, string>
+ */
+function settings_all(bool $refresh = false): array
 {
     static $cache = null;
-    if ($cache === null) {
+    if ($cache === null || $refresh) {
         $cache = [];
         foreach (db_all('SELECT `key`, `value` FROM settings') as $row) {
             $cache[$row['key']] = (string) $row['value'];
@@ -228,6 +231,7 @@ function settings_save(array $pairs): void
     foreach ($pairs as $key => $value) {
         $stmt->execute([$key, (string) $value]);
     }
+    settings_all(true);
 }
 
 function site_name(): string
@@ -237,7 +241,7 @@ function site_name(): string
 
 function agent_name(): string
 {
-    return setting('agent_name', 'Alex Morgan');
+    return setting('agent_name', 'Bünyamin Akkaya');
 }
 
 function agent_first_name(): string
@@ -558,18 +562,19 @@ function lead_create(string $type, array $data): int
         'ip'         => client_ip(),
     ]);
     lead_notify($type, $data);
+    lead_sms_notify($type, $data);
     return $id;
 }
 
-/** Best-effort email notification; failures never block the visitor. */
+/** Best-effort email notification; failures never block the visitor. The SMS
+ *  counterpart lives in includes/sms.php. */
 function lead_notify(string $type, array $data): void
 {
     $to = setting('notify_email', setting('email'));
     if ($to === '' || !valid_email($to)) {
         return;
     }
-    $labels = ['contact' => 'Contact message', 'inquiry' => 'Vehicle inquiry', 'test_drive' => 'Test drive request', 'trade_in' => 'Trade-in appraisal', 'financing' => 'Financing application'];
-    $subject = '[' . site_name() . '] New ' . ($labels[$type] ?? 'lead') . ' from ' . $data['name'];
+    $subject = '[' . site_name() . '] New ' . strtolower(lead_type_label($type)) . ' from ' . $data['name'];
     $body = "Name: {$data['name']}\nEmail: {$data['email']}\nPhone: " . ($data['phone'] ?? '') . "\n";
     foreach ($data['details'] ?? [] as $k => $v) {
         $body .= ucwords(str_replace('_', ' ', (string) $k)) . ": $v\n";

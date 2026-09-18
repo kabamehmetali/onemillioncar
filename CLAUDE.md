@@ -65,9 +65,27 @@ Photos: `admin/includes/upload.php::save_vehicle_image()` validates via finfo + 
 
 ### Forms and leads
 
-All five public forms (contact, vehicle inquiry / test drive, trade-in, financing) POST to themselves, use `form_guard_fields()` (CSRF token `_token`, timestamp `_ts` for a 3-second minimum, honeypot `website`), validate with `post_str()` / `valid_email()` / `valid_phone()`, keep input with `old()`, then call `lead_create()` and `redirect()` with a `flash_set()` message (rendered by `flash_render()`). `lead_notify()` sends a best-effort `mail()` to `notify_email` — leads are always stored regardless.
+All five public forms (contact, vehicle inquiry / test drive, trade-in, financing) POST to themselves, use `form_guard_fields()` (CSRF token `_token`, timestamp `_ts` for a 3-second minimum, honeypot `website`), validate with `post_str()` / `valid_email()` / `valid_phone()`, keep input with `old()`, then call `lead_create()` and `redirect()` with a `flash_set()` message (rendered by `flash_render()`). `lead_notify()` sends a best-effort `mail()` to `notify_email` and `lead_sms_notify()` (`includes/sms.php`) texts the same lead through Twilio — leads are always stored regardless, and neither notifier can block or fail the submission.
 
 Admin POSTs call `require_csrf()` (403 on failure — Apache remaps unknown codes like 419 to 500).
+
+### SMS alerts
+
+`includes/sms.php` posts to Twilio's REST API with cURL (no SDK). Credentials are
+settings rows, edited under Admin → Settings → SMS alerts, never in code or git:
+`sms_enabled`, `sms_notify_number`, `twilio_account_sid`, `twilio_auth_token`,
+`twilio_from_number`. `sms_enabled()` requires the toggle *and* every credential,
+so a half-filled form simply sends nothing.
+
+Numbers are normalised to E.164 by `sms_e164()` (bare 10 digits are assumed +1).
+`lead_sms_body()` keeps each alert inside `SMS_MAX_SEGMENTS` (2) by deriving the
+character budget from the text's own encoding — one character outside GSM-7
+(`·`, a curly quote, an emoji, most accents) drops a segment from 153 characters
+to 67, so the separators this file writes are plain ASCII and the visitor's
+message is trimmed, or dropped, to fit. The admin link is never trimmed.
+
+Failures are logged with `error_log('[sms] …')` and swallowed. The settings page
+has a "Save & send test SMS" button that reports Twilio's own error text.
 
 ### Front-end
 
@@ -82,5 +100,6 @@ Hero images are the supplied showroom photos; the salesperson is always on the r
 ## Things worth knowing
 
 - The seeded consultant name **"Alex Morgan"**, phone, email and address are placeholders — the real ones go in Admin → Settings.
+- Twilio credentials are seeded blank on purpose. Never commit a real Auth Token; enter it in the admin panel, where the field is write-only (blank keeps the stored value).
 - `sql/seed.sql` was produced with a shell heredoc, so the admin password hash inside it is a literal bcrypt string; regenerate with `php -r "echo password_hash('x', PASSWORD_DEFAULT);"` if you change it.
 - Prices are CAD; the calculators assume 13% HST (Ontario).

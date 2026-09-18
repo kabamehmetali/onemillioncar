@@ -24,6 +24,7 @@ mb_internal_encoding('UTF-8');
 
 require __DIR__ . '/db.php';
 require __DIR__ . '/functions.php';
+require __DIR__ . '/sms.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('lah_session');

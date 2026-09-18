@@ -25,6 +25,10 @@ Website and admin panel for a car sales consultant. Plain PHP 8, MySQL, Bootstra
 - **Settings → Business** → your name, title and bio.
 - **Settings → Contact** → phone, WhatsApp, email, notification email, address, hours, map.
 - **Vehicles** → replace the generated placeholder photos with real ones.
+- **Settings → SMS alerts** → paste the Twilio Account SID, Auth Token and phone
+  number, enter the mobile number to alert, switch it on, then use *Save & send
+  test SMS*. Every contact, inquiry, test drive, trade-in and financing
+  submission is then texted to you as it arrives.
 
 ## Pages
 

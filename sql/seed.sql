@@ -45,7 +45,14 @@ Whether you are buying your first car, upgrading the family SUV or hunting a spe
 ('finance_rate_default', '7.99'),
 ('finance_term_default', '72'),
 ('meta_description', 'Lucid Auto Haus — hand-picked, inspected pre-owned vehicles in Toronto and the GTA with transparent pricing, financing for every credit situation and top-dollar trade-ins.'),
-('footer_note', 'All prices are in Canadian dollars and exclude HST and licensing. Financing available OAC. Vehicle availability subject to prior sale.');
+('footer_note', 'All prices are in Canadian dollars and exclude HST and licensing. Financing available OAC. Vehicle availability subject to prior sale.'),
+-- SMS alerts. Twilio credentials are deliberately blank here: enter them in
+-- Admin -> Settings -> SMS alerts so no secret is ever committed to the repo.
+('sms_enabled', '0'),
+('sms_notify_number', ''),
+('twilio_account_sid', ''),
+('twilio_auth_token', ''),
+('twilio_from_number', '');
 
 -- ----------------------------------------------------------------- vehicles
 INSERT INTO vehicles

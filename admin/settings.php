@@ -2,7 +2,7 @@
 require __DIR__ . '/includes/auth.php';
 require_login();
 
-/** Every editable setting, grouped into tabs. type: text | textarea | email | url | number */
+/** Every editable setting, grouped into tabs. type: text | textarea | email | url | number | phone | password | bool */
 $groups = [
     'business' => ['Business', [
         'site_name'        => ['Business name', 'text', 'Shown in the browser title, footer and emails.'],
@@ -26,6 +26,7 @@ $groups = [
         'hours_weekdays'   => ['Hours — Monday to Friday', 'text', ''],
         'hours_saturday'   => ['Hours — Saturday', 'text', ''],
         'hours_sunday'     => ['Hours — Sunday', 'text', ''],
+        'google_maps_url'  => ['Google Maps directions URL', 'url', 'The public Share link used by Get directions links.'],
         'google_maps_embed'=> ['Google Maps embed URL', 'url', 'From Google Maps → Share → Embed a map, copy only the src="…" URL. Leave blank to hide the map.'],
     ]],
     'social' => ['Social', [
@@ -50,6 +51,13 @@ $groups = [
         'finance_rate_default' => ['Default APR % in calculators', 'text', 'e.g. 7.99'],
         'finance_term_default' => ['Default term (months)', 'number', '36, 48, 60, 72, 84 or 96'],
     ]],
+    'sms' => ['SMS alerts', [
+        'sms_enabled'        => ['Text me every new lead', 'bool', 'Contact messages, vehicle inquiries, test drives, trade-ins and financing applications are all texted the moment they are submitted. Leads are stored either way.'],
+        'sms_notify_number'  => ['Send alerts to', 'phone', 'Your mobile number, e.g. +1 647 936 8096.'],
+        'twilio_account_sid' => ['Twilio Account SID', 'text', 'Starts with AC — Twilio Console → Account Info.'],
+        'twilio_auth_token'  => ['Twilio Auth Token', 'password', 'Leave blank to keep the token already saved. Rotate it in the Twilio Console if it is ever exposed.'],
+        'twilio_from_number' => ['Twilio phone number', 'phone', 'The Twilio number the alert is sent from, e.g. +1 779 209 2992.'],
+    ]],
 ];
 
 $errors = [];
@@ -62,19 +70,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 continue;
             }
             $val = trim($_POST[$key]);
+            if ($type === 'password' && $val === '') {
+                // Blank means "keep the stored secret" — the field is never pre-filled.
+                continue;
+            }
+            if ($type === 'bool') {
+                $pairs[$key] = $val === '1' ? '1' : '0';
+                continue;
+            }
             if ($type === 'email' && $val !== '' && !valid_email($val)) {
                 $errors[$key] = 'Enter a valid email address.';
             } elseif ($type === 'url' && $val !== '' && !preg_match('~^https?://~i', $val)) {
                 $errors[$key] = 'Must start with http:// or https://';
             } elseif ($type === 'number' && $val !== '' && !is_numeric($val)) {
                 $errors[$key] = 'Must be a number.';
+            } elseif ($type === 'phone' && $val !== '' && !valid_phone($val)) {
+                $errors[$key] = 'Enter a valid phone number with its country code.';
             }
-            $pairs[$key] = $val;
+            $pairs[$key] = $type === 'phone' && $val !== '' ? sms_e164($val) : $val;
         }
     }
     if (!$errors) {
         settings_save($pairs);
         flash_set('success', 'Settings saved.');
+        // "Send test SMS" saves first, so the test always uses what is on screen.
+        if (isset($_POST['test_sms'])) {
+            $c = sms_config();
+            if ($c['to'] === '') {
+                flash_set('danger', 'Enter the number to send alerts to first.');
+            } else {
+                $test = sms_send($c['to'], site_name() . ': SMS alerts are working. New leads will arrive here.', $c);
+                if ($test['ok']) {
+                    flash_set('success', 'Test message sent to ' . $c['to'] . '.');
+                } else {
+                    flash_set('danger', 'Twilio rejected the test: ' . $test['error']);
+                }
+            }
+            redirect('admin/settings.php?tab=sms');
+        }
         redirect('admin/settings.php' . (isset($_POST['_tab']) ? '?tab=' . rawurlencode((string) $_POST['_tab']) : ''));
     }
 }
@@ -86,6 +119,9 @@ $val = fn(string $k) => e($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST[
 ?>
 <form method="post">
     <?= csrf_field() ?>
+    <?php /* Implicit submit for the Enter key, so a keyboard save can never
+             pick the "send test SMS" button that appears earlier in the DOM. */ ?>
+    <button type="submit" class="d-none" tabindex="-1" aria-hidden="true"></button>
     <input type="hidden" name="_tab" value="<?= e($tab) ?>" id="tabField">
     <?php if ($errors): ?><div class="alert alert-danger">Please fix the highlighted fields.</div><?php endif; ?>
     <ul class="nav nav-tabs mb-3" role="tablist">
@@ -103,13 +139,25 @@ $val = fn(string $k) => e($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST[
                                 <label class="form-label" for="s-<?= $key ?>"><?= e($fl) ?></label>
                                 <?php if ($type === 'textarea'): ?>
                                     <textarea class="form-control<?= isset($errors[$key]) ? ' is-invalid' : '' ?>" id="s-<?= $key ?>" name="<?= $key ?>" rows="<?= in_array($key, ['agent_bio'], true) ? 8 : 3 ?>"><?= $val($key) ?></textarea>
+                                <?php elseif ($type === 'bool'): ?>
+                                    <select class="form-select" id="s-<?= $key ?>" name="<?= $key ?>">
+                                        <option value="0"<?= $val($key) === '1' ? '' : ' selected' ?>>Off</option>
+                                        <option value="1"<?= $val($key) === '1' ? ' selected' : '' ?>>On</option>
+                                    </select>
+                                <?php elseif ($type === 'password'): ?>
+                                    <input type="password" class="form-control<?= isset($errors[$key]) ? ' is-invalid' : '' ?>" id="s-<?= $key ?>" name="<?= $key ?>" value="" autocomplete="new-password" placeholder="<?= setting($key) !== '' ? 'Saved — leave blank to keep it' : 'Not set' ?>">
                                 <?php else: ?>
-                                    <input type="<?= $type === 'number' ? 'text' : ($type === 'url' ? 'url' : $type) ?>" class="form-control<?= isset($errors[$key]) ? ' is-invalid' : '' ?>" id="s-<?= $key ?>" name="<?= $key ?>" value="<?= $val($key) ?>">
+                                    <input type="<?= in_array($type, ['number', 'text'], true) ? 'text' : ($type === 'phone' ? 'tel' : $type) ?>" class="form-control<?= isset($errors[$key]) ? ' is-invalid' : '' ?>" id="s-<?= $key ?>" name="<?= $key ?>" value="<?= $val($key) ?>">
                                 <?php endif; ?>
                                 <?php if (isset($errors[$key])): ?><div class="invalid-feedback"><?= e($errors[$key]) ?></div><?php endif; ?>
                                 <?php if ($help): ?><div class="text-muted-sm"><?= e($help) ?></div><?php endif; ?>
                             </div>
                         <?php endforeach; ?>
+                        <?php if ($g === 'sms'): ?>
+                            <hr>
+                            <p class="text-muted-sm mb-2">Saves the fields above, then sends one real text so you can confirm it arrives.</p>
+                            <button class="btn btn-outline-secondary" name="test_sms" value="1" onclick="document.getElementById('tabField').value='sms'"><i class="fa-solid fa-paper-plane me-1"></i>Save &amp; send test SMS</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
