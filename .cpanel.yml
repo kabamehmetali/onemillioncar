@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    # Change public_html below if this site uses an addon-domain document root.
+    - /bin/bash tools/cpanel-deploy.sh "$HOME/public_html"

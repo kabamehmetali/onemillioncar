@@ -1,0 +1,107 @@
+# Lucid Auto Haus — clean URLs, caching and hardening
+#
+# This file MUST be deployed with the site. Clean URLs (/services, /about,
+# /inventory/<slug>) are produced here; without it — or with an older copy —
+# Apache answers them with 404 or, if its rules loop, 500.
+#
+# If the host does not allow Options overrides the server replies 500 to every
+# page: comment out the two Options directives below and nothing else changes.
+
+Options -Indexes
+
+<IfModule mod_negotiation.c>
+    # MultiViews guesses /services -> services.php on its own and fights the
+    # rules below on some hosts. The explicit rewrite further down does the job.
+    Options -MultiViews
+</IfModule>
+
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never serve source control, configs or developer tooling
+    RewriteRule (^|/)\.(git|svn|hg|env|DS_Store)(/|$) - [F,L]
+    RewriteRule ^(includes|sql|tools)(/|$) - [F,L]
+
+    # Loop guard. Apache re-runs this file against the *rewritten* URL after an
+    # internal rewrite, setting REDIRECT_STATUS while it does. Stopping there
+    # keeps services.php / 404.php from being fed back through the rules below,
+    # which is what turns a clean URL into "Request exceeded the limit of 10
+    # internal redirects" — a 500 in the browser.
+    RewriteCond %{ENV:REDIRECT_STATUS} !^$
+    RewriteRule ^ - [L]
+
+    # Crawler files
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^robots\.txt$ robots.php [L]
+
+    # Public URLs never expose .php — redirect the real endpoint to the clean URL.
+    # (THE_REQUEST holds the original request line, so internal rewrites never loop.)
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{REQUEST_URI} !/admin/
+    RewriteCond %{THE_REQUEST} \s/+(.*?)vehicle\.php\?slug=([A-Za-z0-9_-]+) [NC]
+    RewriteRule ^ /%1inventory/%2 [R=301,L,QSD]
+
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{REQUEST_URI} !/admin/
+    RewriteCond %{THE_REQUEST} \s/+(.*?)index\.php[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{REQUEST_URI} !/admin/
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+
+    # Vehicle detail pages: /inventory/2022-bmw-330i -> vehicle.php?slug=...
+    RewriteRule ^inventory/([A-Za-z0-9_-]+)/?$ vehicle.php?slug=$1 [L,QSA]
+
+    # Extensionless pages: /services -> services.php (public site only)
+    RewriteCond %{REQUEST_URI} !/admin/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/$1.php -f [OR]
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^([A-Za-z0-9_-]+)/?$ $1.php [L,QSA]
+
+    # Anything else that is not a real file or asset shows the styled 404
+    RewriteCond %{REQUEST_URI} !/admin/
+    RewriteCond %{REQUEST_URI} !(^|/)404\.php$
+    RewriteCond %{REQUEST_URI} !\.(?:js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|map|txt|xml|pdf|mp4|webm)$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ 404.php [L]
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<FilesMatch "\.(sql|md|json|lock|log|ini|bak)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

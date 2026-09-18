@@ -1,0 +1,55 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cpanel-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the pushed revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure cPanel SSH access
+        env:
+          CPANEL_SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_PRIVATE_KEY }}
+          CPANEL_SSH_KNOWN_HOSTS: ${{ secrets.CPANEL_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -n "$CPANEL_SSH_PRIVATE_KEY" || { echo 'Missing CPANEL_SSH_PRIVATE_KEY secret.' >&2; exit 1; }
+          test -n "$CPANEL_SSH_KNOWN_HOSTS" || { echo 'Missing CPANEL_SSH_KNOWN_HOSTS secret.' >&2; exit 1; }
+
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$CPANEL_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+          eval "$(ssh-agent -s)"
+          printf '%s\n' "$CPANEL_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          printf 'SSH_AUTH_SOCK=%s\n' "$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          printf 'SSH_AGENT_PID=%s\n' "$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+      - name: Push to the cPanel-managed repository
+        env:
+          CPANEL_REPOSITORY_URL: ${{ secrets.CPANEL_REPOSITORY_URL }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -n "$CPANEL_REPOSITORY_URL" || { echo 'Missing CPANEL_REPOSITORY_URL secret.' >&2; exit 1; }
+
+          git remote add cpanel "$CPANEL_REPOSITORY_URL"
+          git push cpanel HEAD:main

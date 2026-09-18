@@ -32,6 +32,15 @@ esac
 
 [[ "$SOURCE_DIR" != "$DEPLOY_DIR" ]] || fail 'The cPanel repository and document root must be different directories.'
 
+# Files that are not PHP but are essential in production. The site's clean URLs
+# (/services, /about, /inventory/<slug>) come from the root .htaccess, so a
+# deployment without it leaves stale rewrite rules behind and those URLs answer
+# 404 or 500 while the .php endpoints still work. Fail before copying anything.
+printf 'Checking required files...\n'
+for required in .htaccess uploads/.htaccess includes/config.sample.php; do
+    [[ -f "$SOURCE_DIR/$required" ]] || fail "$required is missing from the repository (it must be committed, not git-ignored)."
+done
+
 printf 'Validating PHP files...\n'
 while IFS= read -r -d '' php_file; do
     php -l "$php_file" >/dev/null
@@ -60,5 +69,7 @@ rsync -a --delete --exclude='config.php' "$SOURCE_DIR/includes/" "$DEPLOY_DIR/in
 find "$SOURCE_DIR" -maxdepth 1 -type f -name '*.php' -exec cp -p {} "$DEPLOY_DIR/" \;
 cp -p "$SOURCE_DIR/.htaccess" "$DEPLOY_DIR/.htaccess"
 cp -p "$SOURCE_DIR/uploads/.htaccess" "$DEPLOY_DIR/uploads/.htaccess"
+
+[[ -f "$DEPLOY_DIR/includes/config.php" ]] || printf 'Warning: %s is missing; create it from includes/config.sample.php.\n' "$DEPLOY_DIR/includes/config.php" >&2
 
 printf 'Deployment complete: %s\n' "$(git -C "$SOURCE_DIR" rev-parse --short HEAD 2>/dev/null || printf 'unknown revision')"

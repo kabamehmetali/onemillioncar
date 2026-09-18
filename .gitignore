@@ -1,0 +1,4 @@
+includes/config.php
+uploads/vehicles/*
+!uploads/vehicles/.gitkeep
+.DS_Store

@@ -45,6 +45,12 @@ The deployment deliberately preserves these production-only files:
 - `includes/config.php` (database credentials and production settings)
 - `uploads/vehicles/` (photos uploaded from the admin panel)
 
+The root `.htaccess` **must stay committed**. Every clean URL (`/services`,
+`/about`, `/inventory/<slug>`) is produced by its rewrite rules; a server left
+with an older or hand-written copy answers those URLs with 404 — or 500 if its
+rules loop — while the `.php` endpoints keep working. `tools/cpanel-deploy.sh`
+now refuses to deploy if the file is missing from the repository.
+
 ### One-time setup
 
 1. In **cPanel → Files → Git Version Control**, create a new, empty repository
