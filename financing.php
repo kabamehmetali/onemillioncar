@@ -45,7 +45,7 @@ $hero = [
     'text'   => 'Multiple lender offers side by side, the total cost of borrowing spelled out, and a pre-approval that doesn\'t touch your credit score.',
     'buttons' => [['label' => 'Apply for pre-approval', 'url' => '#apply'], ['label' => 'Payment calculator', 'url' => '#calculator', 'style' => 'outline']],
     'crumbs' => ['Financing' => null],
-    'focus'  => '50% 30%',
+    'focus'  => '50% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

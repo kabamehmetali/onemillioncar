@@ -9,13 +9,16 @@
  *   'size'    => 'lg' | 'md' | 'sm',
  *   'align'   => 'left' | 'center',
  *   'crumbs'  => ['Inventory' => 'inventory', 'Vehicle' => null],
+ *   'focus'   => '72% 0%',
+ *   'mobile_focus' => '78% 0%',
  * ]
  */
-$hero += ['kicker' => '', 'text' => '', 'buttons' => [], 'size' => 'md', 'align' => 'left', 'crumbs' => [], 'image' => 'assets/img/hero/showroom.jpg', 'focus' => '72% 30%'];
+$hero += ['kicker' => '', 'text' => '', 'buttons' => [], 'size' => 'md', 'align' => 'left', 'crumbs' => [], 'image' => 'assets/img/hero/showroom.jpg', 'focus' => '72% 0%'];
+$hero['mobile_focus'] ??= $hero['focus'];
 ?>
 <section class="hero hero-<?= e($hero['size']) ?> hero-<?= e($hero['align']) ?>">
     <div class="hero-media">
-        <img src="<?= asset($hero['image']) ?>" alt="" style="object-position: <?= e($hero['focus']) ?>" <?= $hero['size'] === 'lg' ? 'fetchpriority="high"' : 'loading="eager"' ?>>
+        <img src="<?= asset($hero['image']) ?>" alt="" style="--hero-focus: <?= e($hero['focus']) ?>; --hero-mobile-focus: <?= e($hero['mobile_focus']) ?>" <?= $hero['size'] === 'lg' ? 'fetchpriority="high"' : 'loading="eager"' ?>>
     </div>
     <div class="hero-overlay"></div>
     <div class="container hero-content">

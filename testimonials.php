@@ -11,7 +11,7 @@ $hero = [
     'title'  => 'Rated ' . e(setting('google_rating', '4.9')) . ' / 5 by the people who matter.',
     'text'   => 'Real clients, real vehicles, real experiences.',
     'crumbs' => ['Testimonials' => null],
-    'focus'  => '62% 30%',
+    'focus'  => '62% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

@@ -11,7 +11,7 @@ $hero = [
     'title'  => e(setting('hero_about_title', 'A better way to buy a car')),
     'text'   => setting('hero_about_text'),
     'crumbs' => ['About' => null],
-    'focus'  => '62% 30%',
+    'focus'  => '62% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

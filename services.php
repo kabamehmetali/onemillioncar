@@ -10,7 +10,7 @@ $hero = [
     'title'  => 'Buy, sell, finance — with one person who has your back.',
     'text'   => 'From the first search to the keys in your hand, every step is handled personally.',
     'crumbs' => ['Services' => null],
-    'focus'  => '55% 6%',
+    'focus'  => '55% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

@@ -50,7 +50,7 @@ $hero = [
     'title'  => 'Let\'s talk cars.',
     'text'   => 'Call, text, WhatsApp or drop by — whichever is easiest for you.',
     'crumbs' => ['Contact' => null],
-    'focus'  => '72% 25%',
+    'focus'  => '72% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

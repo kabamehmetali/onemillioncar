@@ -51,7 +51,7 @@ $hero = [
     'title'  => e(setting('hero_inventory_title', 'Current Inventory')),
     'text'   => setting('hero_inventory_text'),
     'crumbs' => ['Inventory' => null],
-    'focus'  => '60% 25%',
+    'focus'  => '60% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';

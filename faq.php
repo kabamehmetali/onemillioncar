@@ -11,7 +11,7 @@ $hero = [
     'title'  => 'Questions people ask before they buy.',
     'text'   => 'If yours isn\'t here, call or message me — I answer everything.',
     'crumbs' => ['FAQ' => null],
-    'focus'  => '50% 30%',
+    'focus'  => '50% 0%',
 ];
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';
