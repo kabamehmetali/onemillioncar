@@ -58,6 +58,12 @@ $groups = [
         'twilio_auth_token'  => ['Twilio Auth Token', 'password', 'Leave blank to keep the token already saved. Rotate it in the Twilio Console if it is ever exposed.'],
         'twilio_from_number' => ['Twilio phone number', 'phone', 'The Twilio number the alert is sent from, e.g. +1 779 209 2992.'],
     ]],
+    'recaptcha' => ['reCAPTCHA', [
+        'recaptcha_enabled'    => ['Protect the public forms', 'bool', 'Contact, vehicle inquiry, test drive, trade-in and financing. Google scores each visitor invisibly — nobody is asked to click pictures of traffic lights.'],
+        'recaptcha_site_key'   => ['Site key', 'text', 'From google.com/recaptcha/admin — the v3 key for this domain. It is public and appears in the page source.'],
+        'recaptcha_secret_key' => ['Secret key', 'password', 'Leave blank to keep the key already saved. Never share it or commit it to the repository.'],
+        'recaptcha_min_score'  => ['Minimum score', 'text', '0.0 is certainly a bot, 1.0 is certainly a person. 0.5 is Google’s default — lower it to 0.3 if real enquiries are being turned away.'],
+    ]],
 ];
 
 $errors = [];
@@ -90,6 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pairs[$key] = $type === 'phone' && $val !== '' ? sms_e164($val) : $val;
         }
     }
+    if (isset($pairs['recaptcha_min_score']) && $pairs['recaptcha_min_score'] !== ''
+        && (!is_numeric($pairs['recaptcha_min_score'])
+            || (float) $pairs['recaptcha_min_score'] < 0 || (float) $pairs['recaptcha_min_score'] > 1)) {
+        $errors['recaptcha_min_score'] = 'Enter a score between 0.0 and 1.0.';
+    }
     if (!$errors) {
         settings_save($pairs);
         flash_set('success', 'Settings saved.');
@@ -107,6 +118,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             redirect('admin/settings.php?tab=sms');
+        }
+        // The connection test also saves first, so it uses what is on screen.
+        if (isset($_POST['test_recaptcha'])) {
+            $test = recaptcha_test_connection();
+            if ($test['ok']) {
+                flash_set('success', 'This server can reach Google. ' . $test['note']);
+            } else {
+                flash_set('danger', $test['error']);
+            }
+            redirect('admin/settings.php?tab=recaptcha');
         }
         redirect('admin/settings.php' . (isset($_POST['_tab']) ? '?tab=' . rawurlencode((string) $_POST['_tab']) : ''));
     }
@@ -153,6 +174,11 @@ $val = fn(string $k) => e($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST[
                                 <?php if ($help): ?><div class="text-muted-sm"><?= e($help) ?></div><?php endif; ?>
                             </div>
                         <?php endforeach; ?>
+                        <?php if ($g === 'recaptcha'): ?>
+                            <hr>
+                            <p class="text-muted-sm mb-2">Saves the fields above, then checks that this server can reach Google. Google will not confirm a secret key on its own, so the real test is submitting a form on the public site &mdash; and remember to list this domain on the key in the reCAPTCHA console.</p>
+                            <button class="btn btn-outline-secondary" name="test_recaptcha" value="1" onclick="document.getElementById('tabField').value='recaptcha'"><i class="fa-solid fa-shield-halved me-1"></i>Save &amp; test connection</button>
+                        <?php endif; ?>
                         <?php if ($g === 'sms'): ?>
                             <hr>
                             <p class="text-muted-sm mb-2">Saves the fields above, then sends one real text so you can confirm it arrives.</p>

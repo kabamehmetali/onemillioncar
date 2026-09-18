@@ -29,6 +29,14 @@ Website and admin panel for a car sales consultant. Plain PHP 8, MySQL, Bootstra
   number, enter the mobile number to alert, switch it on, then use *Save & send
   test SMS*. Every contact, inquiry, test drive, trade-in and financing
   submission is then texted to you as it arrives.
+- **Settings → reCAPTCHA** → paste the reCAPTCHA **v3** site key and secret key
+  from [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin) and
+  switch it on. List every domain the site answers on (including `localhost` for
+  development) against the key, or Google will not grade your visitors. Visitors
+  see nothing — there is no checkbox and no puzzle — they are simply scored in
+  the background. If genuine enquiries start being turned away, lower *Minimum
+  score* from 0.5 to 0.3; `[recaptcha]` lines in the PHP error log say exactly
+  why each refusal happened.
 
 ## Pages
 

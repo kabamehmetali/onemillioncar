@@ -5,7 +5,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_valid()) {
         $errors['form'] = 'Your session expired — please try again.';
-    } elseif (($spam = spam_check()) !== '') {
+    } elseif (($spam = spam_check('trade_in')) !== '') {
         $errors['form'] = $spam;
     } else {
         $name  = post_str('name', 100);
@@ -91,7 +91,7 @@ require __DIR__ . '/includes/hero.php';
             <div class="col-lg-8">
                 <?= flash_render() ?>
                 <form method="post" action="<?= url('trade-in') ?>#appraisal" class="form-card needs-validation" novalidate>
-                    <?= form_guard_fields() ?>
+                    <?= form_guard_fields('trade_in') ?>
                     <?php if (!empty($errors['form'])): ?><div class="alert alert-danger"><?= e($errors['form']) ?></div><?php endif; ?>
                     <h3>Vehicle appraisal request</h3>
                     <p class="form-intro">Fields marked * are required.</p>
@@ -119,7 +119,7 @@ require __DIR__ . '/includes/hero.php';
                         <div class="col-12"><label class="form-label" for="t-msg">Notes (options, accidents, recent service, anything relevant)</label><textarea class="form-control" id="t-msg" name="message" rows="3"><?= e(old('message')) ?></textarea></div>
                         <div class="col-12"><button type="submit" class="btn btn-lah btn-lg w-100"><i class="fa-solid fa-calculator me-2"></i>Get my offer</button></div>
                     </div>
-                    <p class="form-text mt-3 mb-0">No obligation. <a href="<?= url('privacy') ?>">Privacy policy</a>.</p>
+                    <p class="form-text mt-3 mb-0">No obligation. <a href="<?= url('privacy') ?>">Privacy policy</a>.<?= recaptcha_notice() ?></p>
                 </form>
             </div>
         </div>

@@ -17,7 +17,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_valid()) {
         $errors['form'] = 'Your session expired — please try again.';
-    } elseif (($spam = spam_check()) !== '') {
+    } elseif (($spam = spam_check('contact')) !== '') {
         $errors['form'] = $spam;
     } else {
         $name    = post_str('name', 100);
@@ -55,6 +55,7 @@ $hero = [
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';
 $hours = business_hours();
+$mapUrl = setting('google_maps_url');
 ?>
 
 <section class="section section-dark" id="message">
@@ -71,7 +72,8 @@ $hours = business_hours();
                 </div>
                 <div class="info-card mb-4">
                     <h3><i class="fa-solid fa-location-dot"></i>Showroom</h3>
-                    <p class="mb-2"><?= e(setting('address_line')) ?><br><?= e(setting('city')) ?></p>
+                    <p class="mb-2"><?php if ($mapUrl !== ''): ?><a href="<?= e($mapUrl) ?>" target="_blank" rel="noopener"><?php endif; ?><?= e(setting('address_line')) ?><br><?= e(setting('city')) ?><?php if ($mapUrl !== ''): ?></a><?php endif; ?></p>
+                    <?php if ($mapUrl !== ''): ?><p class="mb-2"><a href="<?= e($mapUrl) ?>" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right me-1"></i>Get directions</a></p><?php endif; ?>
                     <p class="small text-silver mb-0">Serving <?= e(setting('service_area')) ?>. Home and office visits available across the GTA.</p>
                 </div>
                 <div class="info-card">
@@ -85,7 +87,7 @@ $hours = business_hours();
             <div class="col-lg-8">
                 <?= flash_render() ?>
                 <form method="post" action="<?= url('contact') ?>#message" class="form-card needs-validation" novalidate>
-                    <?= form_guard_fields() ?>
+                    <?= form_guard_fields('contact') ?>
                     <?php if (!empty($errors['form'])): ?><div class="alert alert-danger"><?= e($errors['form']) ?></div><?php endif; ?>
                     <h3>Send a message</h3>
                     <p class="form-intro">I read and answer every message personally.</p>
@@ -104,7 +106,7 @@ $hours = business_hours();
                             </select></div>
                         <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-lah w-100"><i class="fa-solid fa-paper-plane me-2"></i>Send message</button></div>
                     </div>
-                    <p class="form-text mt-3 mb-0">No spam, no lists. <a href="<?= url('privacy') ?>">Privacy policy</a>.</p>
+                    <p class="form-text mt-3 mb-0">No spam, no lists. <a href="<?= url('privacy') ?>">Privacy policy</a>.<?= recaptcha_notice() ?></p>
                 </form>
             </div>
         </div>

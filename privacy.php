@@ -21,6 +21,8 @@ require __DIR__ . '/includes/header.php';
             <p>Inquiries are stored in a password-protected system accessible only to <?= e(site_name()) ?>. Records are kept as long as needed to serve you and to meet legal record-keeping obligations for vehicle sales in Ontario, then deleted.</p>
             <h2>Cookies</h2>
             <p>This site uses a single session cookie to keep forms secure. It contains no personal data and expires when you close your browser. Embedded maps and fonts are loaded from Google, which may set its own cookies under its privacy policy.</p>
+            <h2>Spam protection</h2>
+            <p>The forms on this site are protected by Google reCAPTCHA, which checks that a submission comes from a person rather than a program. There is nothing to click: to make that judgement Google collects hardware and software information from your browser and analyses it, subject to Google&rsquo;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a>. It is used only to tell real enquiries from spam. If it ever stops you from sending a message, please call or text instead &mdash; the number is at the foot of every page.</p>
             <h2>Your rights</h2>
             <p>You can ask to see, correct or delete the information I hold about you at any time by emailing <a href="mailto:<?= e(setting('email')) ?>"><?= e(setting('email')) ?></a>.</p>
             <h2>Contact</h2>

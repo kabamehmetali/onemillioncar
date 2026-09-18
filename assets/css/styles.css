@@ -54,6 +54,10 @@ img { max-width: 100%; height: auto; }
 .skip-link { position: absolute; left: -999px; top: 8px; z-index: 2000; background: var(--lah-red); color: #fff; padding: .5rem 1rem; border-radius: 6px; }
 .skip-link:focus { left: 8px; }
 .hp-field { position: absolute; left: -5000px; width: 1px; height: 1px; overflow: hidden; }
+/* reCAPTCHA v3's floating badge lands on top of the WhatsApp button and the
+   back-to-top control. Google allows hiding it as long as the disclosure is
+   shown instead — recaptcha_notice() prints it under every protected form. */
+.grecaptcha-badge { visibility: hidden; }
 
 /* ------------------------------------------------------------- buttons */
 .btn { font-family: var(--font-display); font-weight: 600; letter-spacing: .02em; border-radius: 999px; padding: .7rem 1.5rem; transition: all .25s; }

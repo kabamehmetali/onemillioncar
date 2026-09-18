@@ -14,7 +14,7 @@ $sent   = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_valid()) {
         $errors['form'] = 'Your session expired — please try again.';
-    } elseif (($spam = spam_check()) !== '') {
+    } elseif (($spam = spam_check('vehicle_inquiry')) !== '') {
         $errors['form'] = $spam;
     } else {
         $name    = post_str('name', 100);
@@ -271,7 +271,7 @@ require __DIR__ . '/includes/header.php';
             </div>
             <div class="col-lg-7">
                 <form method="post" action="<?= vehicle_url($v) ?>#inquire" class="form-card needs-validation" novalidate>
-                    <?= form_guard_fields() ?>
+                    <?= form_guard_fields('vehicle_inquiry') ?>
                     <?php if (!empty($errors['form'])): ?><div class="alert alert-danger"><?= e($errors['form']) ?></div><?php endif; ?>
                     <h3>About the <?= e($v['year'] . ' ' . $v['make'] . ' ' . $v['model']) ?></h3>
                     <p class="form-intro">Stock <?= e($v['stock_number']) ?> · <?= money($price) ?></p>
@@ -295,7 +295,7 @@ require __DIR__ . '/includes/header.php';
                         </div>
                         <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-lah w-100">Send request</button></div>
                     </div>
-                    <p class="form-text mt-3 mb-0">By submitting you agree to be contacted about this vehicle. No spam, ever. <a href="<?= url('privacy') ?>">Privacy policy</a>.</p>
+                    <p class="form-text mt-3 mb-0">By submitting you agree to be contacted about this vehicle. No spam, ever. <a href="<?= url('privacy') ?>">Privacy policy</a>.<?= recaptcha_notice() ?></p>
                 </form>
             </div>
         </div>

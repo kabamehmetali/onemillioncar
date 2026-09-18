@@ -8,7 +8,7 @@ INSERT INTO users (username, password_hash, display_name) VALUES
 INSERT INTO settings (`key`, `value`) VALUES
 ('site_name', 'Lucid Auto Haus'),
 ('tagline', 'Clarity in every deal.'),
-('agent_name', 'Alex Morgan'),
+('agent_name', 'Bünyamin Akkaya'),
 ('agent_title', 'Sales & Leasing Consultant'),
 ('agent_bio_short', 'I help drivers across the Greater Toronto Area find the right vehicle at the right price — without the pressure, the games or the fine print. Every car I sell comes with straight answers, a full inspection report and my personal number.'),
 ('agent_bio', 'I got into the car business for a simple reason: I love cars, and I hated how it felt to buy one. Long waits, vague numbers, a manager behind a curtain — none of it served the person actually signing the paperwork.
@@ -19,17 +19,18 @@ Whether you are buying your first car, upgrading the family SUV or hunting a spe
 ('years_experience', '9'),
 ('cars_sold', '1,200'),
 ('google_rating', '4.9'),
-('phone', '(416) 555-0148'),
-('whatsapp', '14165550148'),
+('phone', '+16479368096'),
+('whatsapp', '16479368096'),
 ('email', 'hello@lucidautohaus.ca'),
 ('notify_email', ''),
-('address_line', '2500 Dixie Road, Unit 4'),
-('city', 'Mississauga, ON L4Y 2A2'),
+('address_line', '4-8044 Dixie Rd'),
+('city', 'Brampton, ON L6T 5G8'),
 ('service_area', 'Toronto · Mississauga · Brampton · Vaughan · Markham · Oakville'),
 ('hours_weekdays', '9:00 AM – 7:00 PM'),
 ('hours_saturday', '10:00 AM – 5:00 PM'),
 ('hours_sunday', 'By appointment'),
-('google_maps_embed', 'https://www.google.com/maps?q=Mississauga,+ON&output=embed'),
+('google_maps_url', 'https://maps.app.goo.gl/HzKh1ci3JHszJxrB7'),
+('google_maps_embed', 'https://www.google.com/maps?q=43.6990399,-79.7089&z=17&output=embed'),
 ('social_instagram', 'https://instagram.com/'),
 ('social_facebook', 'https://facebook.com/'),
 ('social_tiktok', ''),
@@ -52,7 +53,13 @@ Whether you are buying your first car, upgrading the family SUV or hunting a spe
 ('sms_notify_number', ''),
 ('twilio_account_sid', ''),
 ('twilio_auth_token', ''),
-('twilio_from_number', '');
+('twilio_from_number', ''),
+-- reCAPTCHA v3 on the public forms. The secret key is deliberately blank here:
+-- enter both keys in Admin -> Settings -> reCAPTCHA so no secret reaches the repo.
+('recaptcha_enabled', '0'),
+('recaptcha_site_key', ''),
+('recaptcha_secret_key', ''),
+('recaptcha_min_score', '0.5');
 
 -- ----------------------------------------------------------------- vehicles
 INSERT INTO vehicles

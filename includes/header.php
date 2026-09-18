@@ -81,6 +81,7 @@ $navHasFlyout = $navStock > 0 && ($navBodies !== [] || $navPriceBands !== []);
         'telephone'   => setting('phone'),
         'email'       => setting('email'),
         'address'     => ['@type' => 'PostalAddress', 'streetAddress' => setting('address_line'), 'addressLocality' => setting('city'), 'addressCountry' => 'CA'],
+        'hasMap'      => setting('google_maps_url'),
         'areaServed'  => setting('service_area'),
         'openingHours'=> ['Mo-Fr ' . setting('hours_weekdays'), 'Sa ' . setting('hours_saturday')],
         'founder'     => ['@type' => 'Person', 'name' => agent_name(), 'jobTitle' => setting('agent_title')],

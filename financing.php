@@ -5,7 +5,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_valid()) {
         $errors['form'] = 'Your session expired — please try again.';
-    } elseif (($spam = spam_check()) !== '') {
+    } elseif (($spam = spam_check('financing')) !== '') {
         $errors['form'] = $spam;
     } else {
         $name   = post_str('name', 100);
@@ -134,7 +134,7 @@ require __DIR__ . '/includes/hero.php';
             <div class="col-lg-8">
                 <?= flash_render() ?>
                 <form method="post" action="<?= url('financing') ?>#apply" class="form-card needs-validation" novalidate>
-                    <?= form_guard_fields() ?>
+                    <?= form_guard_fields('financing') ?>
                     <?php if (!empty($errors['form'])): ?><div class="alert alert-danger"><?= e($errors['form']) ?></div><?php endif; ?>
                     <h3>Financing pre-approval</h3>
                     <p class="form-intro">Fields marked * are required.</p>
@@ -173,7 +173,7 @@ require __DIR__ . '/includes/hero.php';
                         <div class="col-12"><label class="form-label" for="f-msg">Anything else I should know?</label><textarea class="form-control" id="f-msg" name="message" rows="3"><?= e(old('message')) ?></textarea></div>
                         <div class="col-12"><button type="submit" class="btn btn-lah btn-lg w-100"><i class="fa-solid fa-paper-plane me-2"></i>Submit pre-approval</button></div>
                     </div>
-                    <p class="form-text mt-3 mb-0">Soft inquiry only. By submitting you consent to being contacted about financing options. <a href="<?= url('privacy') ?>">Privacy policy</a>.</p>
+                    <p class="form-text mt-3 mb-0">Soft inquiry only. By submitting you consent to being contacted about financing options. <a href="<?= url('privacy') ?>">Privacy policy</a>.<?= recaptcha_notice() ?></p>
                 </form>
             </div>
         </div>

@@ -65,9 +65,51 @@ Photos: `admin/includes/upload.php::save_vehicle_image()` validates via finfo + 
 
 ### Forms and leads
 
-All five public forms (contact, vehicle inquiry / test drive, trade-in, financing) POST to themselves, use `form_guard_fields()` (CSRF token `_token`, timestamp `_ts` for a 3-second minimum, honeypot `website`), validate with `post_str()` / `valid_email()` / `valid_phone()`, keep input with `old()`, then call `lead_create()` and `redirect()` with a `flash_set()` message (rendered by `flash_render()`). `lead_notify()` sends a best-effort `mail()` to `notify_email` and `lead_sms_notify()` (`includes/sms.php`) texts the same lead through Twilio — leads are always stored regardless, and neither notifier can block or fail the submission.
+All five public forms (contact, vehicle inquiry / test drive, trade-in, financing) POST to themselves, use `form_guard_fields($action)` (CSRF token `_token`, timestamp `_ts` for a 3-second minimum, honeypot `website`, reCAPTCHA token field), validate with `post_str()` / `valid_email()` / `valid_phone()`, keep input with `old()`, then call `lead_create()` and `redirect()` with a `flash_set()` message (rendered by `flash_render()`). `spam_check($action)` runs the honeypot, the timer and then reCAPTCHA, so a new form is protected simply by passing the same action string to both helpers. `lead_notify()` sends a best-effort `mail()` to `notify_email` and `lead_sms_notify()` (`includes/sms.php`) texts the same lead through Twilio — leads are always stored regardless, and neither notifier can block or fail the submission.
 
 Admin POSTs call `require_csrf()` (403 on failure — Apache remaps unknown codes like 419 to 500).
+
+### reCAPTCHA
+
+`includes/recaptcha.php` adds Google reCAPTCHA **v3** (invisible, score-based —
+no checkbox, no picture puzzles) to the five public forms. Keys are settings
+rows edited under Admin → Settings → reCAPTCHA, never in code or git:
+`recaptcha_enabled`, `recaptcha_site_key`, `recaptcha_secret_key`,
+`recaptcha_min_score`.
+
+`form_guard_fields($action)` emits the hidden `g-recaptcha-response` field,
+`includes/footer.php` calls `recaptcha_footer()` which loads Google's script
+only on pages that rendered one, and `spam_check($action)` verifies the token.
+Actions are `contact`, `vehicle_inquiry`, `trade_in` and `financing`, which is
+how the forms are told apart in Google's console.
+
+The token is minted **on submit**, not on page load, because a v3 token expires
+after two minutes and the financing form takes longer than that to fill in. The
+binding sits on the form's submit event, after the Bootstrap validation handler
+in `scripts.js`, and bails on `e.defaultPrevented` so an invalid form never
+spends a token.
+
+The failure policy is the important part and is written out at the top of
+`includes/recaptcha.php`: only a real Google verdict refuses a submission (a
+missing or forged token, a replayed one, a wrong action, or a score below the
+threshold). Everything Google declines to grade — unreachable, no cURL, a
+refused secret, `browser-error` — is **allowed** and logged as
+`[recaptcha] allowed without a verdict`, because one mistyped key must not
+silently swallow every enquiry the site receives. Verified against the live API:
+siteverify answers `invalid-input-response` for a wrong secret *and* for a
+forged token, and no longer returns `invalid-input-secret`, so token length is
+what separates a real browser token from a forged one.
+
+The floating badge is hidden in `styles.css` (it would sit on top of the
+WhatsApp button); `recaptcha_notice()` prints the disclosure Google's terms
+require in its place, next to the privacy line under each form.
+
+Watch `[recaptcha] rejected` in the PHP error log after going live. Rejections
+that read `score 0.2 below 0.5` mean the threshold is too strict — lower
+`recaptcha_min_score` to 0.3. The happy path cannot be exercised from an
+automated browser: reCAPTCHA returns `browser-error` for headless Chrome and
+for CDP-driven real Chrome alike, so only a human hand can confirm a passing
+score.
 
 ### SMS alerts
 
@@ -99,6 +141,10 @@ Hero images are the supplied showroom photos; the salesperson is always on the r
 
 ## Things worth knowing
 
+- reCAPTCHA keys are seeded blank on purpose, like the Twilio ones. The site key
+  is public (it appears in the page source) but the secret key must never be
+  committed; enter both in the admin panel, where the secret field is write-only
+  (blank keeps the stored value).
 - The seeded consultant name **"Alex Morgan"**, phone, email and address are placeholders — the real ones go in Admin → Settings.
 - Twilio credentials are seeded blank on purpose. Never commit a real Auth Token; enter it in the admin panel, where the field is write-only (blank keeps the stored value).
 - `sql/seed.sql` was produced with a shell heredoc, so the admin password hash inside it is a literal bcrypt string; regenerate with `php -r "echo password_hash('x', PASSWORD_DEFAULT);"` if you change it.

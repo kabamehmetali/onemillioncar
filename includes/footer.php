@@ -1,6 +1,7 @@
 <?php
 /** Shared footer, scripts and page closer. */
 $hours = business_hours();
+$mapUrl = setting('google_maps_url');
 ?>
 </main>
 
@@ -45,7 +46,7 @@ $hours = business_hours();
             <div class="col-lg-4">
                 <h6 class="footer-heading">Visit or Call</h6>
                 <ul class="footer-contact">
-                    <li><i class="fa-solid fa-location-dot"></i><span><?= e(setting('address_line')) ?><br><?= e(setting('city')) ?></span></li>
+                    <li><i class="fa-solid fa-location-dot"></i><?php if ($mapUrl !== ''): ?><a href="<?= e($mapUrl) ?>" target="_blank" rel="noopener"><?php else: ?><span><?php endif; ?><?= e(setting('address_line')) ?><br><?= e(setting('city')) ?><?php if ($mapUrl !== ''): ?></a><?php else: ?></span><?php endif; ?></li>
                     <li><i class="fa-solid fa-phone"></i><a href="<?= e(phone_href(setting('phone'))) ?>"><?= e(setting('phone')) ?></a></li>
                     <li><i class="fa-solid fa-envelope"></i><a href="mailto:<?= e(setting('email')) ?>"><?= e(setting('email')) ?></a></li>
                 </ul>
@@ -74,6 +75,7 @@ $hours = business_hours();
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="<?= asset('assets/js/scripts.js') ?>"></script>
+<?= recaptcha_footer() ?>
 <?= $extraScripts ?? '' ?>
 </body>
 </html>

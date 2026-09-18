@@ -328,10 +328,12 @@ function valid_phone(string $phone): bool
 }
 
 /**
- * Honeypot + timing check shared by every public form.
+ * Honeypot + timing + reCAPTCHA check shared by every public form. Pass the
+ * same $action here and to form_guard_fields() so Google can tell the forms
+ * apart in its console; reCAPTCHA is skipped entirely when it is switched off.
  * Returns an error string, or '' when the submission looks human.
  */
-function spam_check(): string
+function spam_check(string $action = ''): string
 {
     if (($_POST['website'] ?? '') !== '') {
         return 'Submission rejected.';
@@ -340,14 +342,15 @@ function spam_check(): string
     if ($started > 0 && time() - $started < 3) {
         return 'That was quick — please try again.';
     }
-    return '';
+    return recaptcha_check($action);
 }
 
-function form_guard_fields(): string
+function form_guard_fields(string $action = ''): string
 {
     return csrf_field()
         . '<input type="hidden" name="_ts" value="' . time() . '">'
-        . '<div class="hp-field" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>';
+        . '<div class="hp-field" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>'
+        . recaptcha_field($action);
 }
 
 /* --------------------------------------------------------------- vehicles */
