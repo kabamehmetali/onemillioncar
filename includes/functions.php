@@ -119,11 +119,18 @@ function url(string $path = ''): string
     $path = ltrim($path, '/');
     if (!(defined('CLEAN_URLS') && CLEAN_URLS) && $path !== '') {
         // Map clean routes back to the real endpoints when rewrites are unavailable.
+        // The fragment is split off first so links like 'services#buy' survive.
+        $fragment = '';
+        if (($hash = strpos($path, '#')) !== false) {
+            $fragment = substr($path, $hash);
+            $path     = substr($path, 0, $hash);
+        }
         if (preg_match('~^inventory/([^/?]+)$~', $path, $m)) {
             $path = 'vehicle.php?slug=' . $m[1];
         } elseif (preg_match('~^([a-z0-9-]+)(\?.*)?$~', $path, $m) && is_file(APP_ROOT . '/' . $m[1] . '.php')) {
             $path = $m[1] . '.php' . ($m[2] ?? '');
         }
+        $path .= $fragment;
     }
     return app_base() . $path;
 }
