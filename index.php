@@ -8,6 +8,7 @@ $reviews         = testimonials(3);
 $facets          = inventory_facets();
 $hero            = [
     'image'   => 'assets/img/hero/home.jpg',
+    'focus'   => '76% 0%',
     'size'    => 'lg',
     'kicker'  => setting('hero_home_kicker'),
     'title'   => preg_replace('/\b(No games\.?)$/i', '<em>$1</em>', e(setting('hero_home_title'))),

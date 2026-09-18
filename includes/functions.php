@@ -479,6 +479,62 @@ function inventory_facets(): array
     ];
 }
 
+/** Price steps offered by the inventory filter selects. The nav price bands
+ *  snap to these, so a band chosen from the nav survives the next filter
+ *  submit instead of being silently dropped by inventory.php. */
+function price_steps(): array
+{
+    return [15000, 20000, 25000, 30000, 35000, 40000, 50000, 60000, 75000, 100000, 150000];
+}
+
+/** Up to three price bands for the nav flyout: boundaries snapped to
+ *  price_steps(), every band guaranteed to hold at least one live vehicle. */
+function inventory_price_bands(): array
+{
+    static $bands = null;
+    if ($bands !== null) {
+        return $bands;
+    }
+    $prices = array_map(
+        'floatval',
+        array_column(db_all('SELECT COALESCE(NULLIF(sale_price,0), price) AS p FROM vehicles WHERE status IN ("available","pending") ORDER BY p'), 'p')
+    );
+    $total = count($prices);
+    if ($total < 3) {
+        return $bands = [];
+    }
+    $count = static fn (array $p, ?float $lo, ?float $hi): int => count(array_filter(
+        $p,
+        static fn (float $v): bool => ($lo === null || $v > $lo) && ($hi === null || $v <= $hi)
+    ));
+    /* pick the steps nearest the 1/3 and 2/3 quantiles that leave no band empty */
+    $steps = array_values(array_filter(price_steps(), static fn (int $s): bool => $s > $prices[0] && $s < $prices[$total - 1]));
+    $best  = null;
+    foreach ($steps as $i => $c1) {
+        foreach (array_slice($steps, $i + 1) as $c2) {
+            $a = $count($prices, null, (float) $c1);
+            $b = $count($prices, (float) $c1, (float) $c2);
+            $c = $count($prices, (float) $c2, null);
+            if ($a < 1 || $b < 1 || $c < 1) {
+                continue;
+            }
+            /* most even split wins */
+            $spread = max($a, $b, $c) - min($a, $b, $c);
+            if ($best === null || $spread < $best['spread']) {
+                $best = ['spread' => $spread, 'c1' => $c1, 'c2' => $c2, 'n' => [$a, $b, $c]];
+            }
+        }
+    }
+    if ($best === null) {
+        return $bands = [];
+    }
+    return $bands = [
+        ['label' => 'Under ' . money($best['c1']),                         'count' => $best['n'][0], 'q' => ['max_price' => $best['c1']]],
+        ['label' => money($best['c1']) . ' – ' . money($best['c2']),       'count' => $best['n'][1], 'q' => ['min_price' => $best['c1'], 'max_price' => $best['c2']]],
+        ['label' => money($best['c2']) . ' and up',                        'count' => $best['n'][2], 'q' => ['min_price' => $best['c2']]],
+    ];
+}
+
 /* ------------------------------------------------------------------ leads */
 
 function lead_create(string $type, array $data): int

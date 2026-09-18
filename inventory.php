@@ -56,7 +56,7 @@ $hero = [
 require __DIR__ . '/includes/header.php';
 require __DIR__ . '/includes/hero.php';
 
-$priceSteps = [15000, 20000, 25000, 30000, 35000, 40000, 50000, 60000, 75000, 100000, 150000];
+$priceSteps = price_steps();
 ?>
 
 <section class="section-sm section-dark">
