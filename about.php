@@ -3,7 +3,8 @@ require __DIR__ . '/includes/app.php';
 
 $pageTitle       = 'About ' . agent_name();
 $metaDescription = agent_name() . ', ' . setting('agent_title') . ' at ' . site_name() . '. ' . excerpt(setting('agent_bio_short'), 140);
-$reviews         = testimonials(2);
+$reviews         = reviews_for_display(2);
+$reviewSummary   = google_review_summary();
 $hero = [
     'image'  => 'assets/img/hero/about.jpg',
     'size'   => 'md',
@@ -34,7 +35,7 @@ require __DIR__ . '/includes/hero.php';
                 <div class="signature"><?= e(agent_name()) ?><small>Founder, <?= e(site_name()) ?></small></div>
                 <div class="stat-inline">
                     <div><strong><?= e(setting('years_experience', '9')) ?>+</strong><span>Years experience</span></div>
-                    <div><strong><?= e(setting('google_rating', '4.9')) ?></strong><span>Google rating</span></div>
+                    <div><strong><?= e($reviewSummary['rating_label']) ?></strong><span translate="no">Google Maps rating</span></div>
                     <div><strong>100%</strong><span>Inspected inventory</span></div>
                 </div>
             </div>
@@ -103,14 +104,11 @@ require __DIR__ . '/includes/hero.php';
             </div>
             <?php foreach ($reviews as $t): ?>
                 <div class="col-lg-4 col-md-6">
-                    <div class="testimonial-card">
-                        <?= stars($t['rating']) ?>
-                        <p class="testimonial-quote mt-3">"<?= e(excerpt($t['quote'], 220)) ?>"</p>
-                        <div class="testimonial-meta"><span class="testimonial-avatar"><?= e(initials($t['name'])) ?></span><div><strong><?= e($t['name']) ?></strong><span><?= e($t['location']) ?></span></div></div>
-                    </div>
+                    <?php $reviewExcerpt = 220; require __DIR__ . '/includes/review-card.php'; ?>
                 </div>
             <?php endforeach; ?>
         </div>
+        <?php if (reviews_are_from_google($reviews)): ?><p class="google-review-notice"><span class="gmp-attribution" translate="no">Google Maps</span> selects and orders these reviews by relevance. <a href="<?= e($reviewSummary['maps_url']) ?>" target="_blank" rel="noopener">View all <?= number($reviewSummary['count']) ?> reviews</a>.</p><?php endif; ?>
     </div>
 </section>
 <?php endif; ?>

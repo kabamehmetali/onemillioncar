@@ -619,8 +619,12 @@ img { max-width: 100%; height: auto; }
 .testimonial-quote { font-size: 1rem; color: var(--lah-silver); flex: 1; margin-bottom: 1.4rem; }
 .testimonial-meta { display: flex; align-items: center; gap: .9rem; }
 .testimonial-avatar { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, var(--lah-red), var(--lah-red-dark)); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: .9rem; flex: none; }
+.testimonial-avatar img { display: block; width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
 .testimonial-meta strong { display: block; color: #fff; font-size: .95rem; }
 .testimonial-meta span { font-size: .78rem; color: var(--lah-silver-2); }
+.testimonial-meta a { color: inherit; }
+.testimonial-meta a:hover { color: var(--lah-red); }
+.testimonial-meta .fa-arrow-up-right-from-square { font-size: .62rem; margin-left: .15rem; }
 .stars { color: #f5b301; font-size: .8rem; letter-spacing: .1em; }
 .stars .is-empty { color: rgba(255, 255, 255, .2); }
 .section-paper .testimonial-card { background: #fff; border-color: #e3e4e9; }
@@ -630,6 +634,11 @@ img { max-width: 100%; height: auto; }
 .rating-summary { display: inline-flex; align-items: center; gap: 1rem; background: var(--lah-ink-2); border: 1px solid var(--lah-line); border-radius: 999px; padding: .6rem 1.3rem .6rem .8rem; }
 .rating-summary strong { font-family: var(--font-display); font-size: 1.6rem; color: #fff; }
 .rating-summary span { font-size: .78rem; color: var(--lah-silver-2); }
+a.rating-summary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0, 0, 0, .08); }
+.gmp-attribution { font-family: Roboto, Arial, sans-serif; font-style: normal; font-weight: 400; font-size: 12px; letter-spacing: normal; white-space: nowrap; }
+.google-review-notice { margin: 1.25rem 0 0; color: #5e5e5e; font-size: .78rem; line-height: 1.6; }
+.google-review-notice-top { margin: -.5rem 0 1.5rem; }
+.google-review-notice a { color: #303136; text-decoration: underline; text-underline-offset: 2px; }
 
 /* ------------------------------------------------------------- brand strip */
 .brand-strip { border-top: 1px solid var(--lah-line); border-bottom: 1px solid var(--lah-line); background: var(--lah-ink); padding: 1.4rem 0; }

@@ -4,7 +4,8 @@ require __DIR__ . '/includes/app.php';
 $pageTitle       = site_name();
 $metaDescription = setting('meta_description');
 $featured        = featured_vehicles(6);
-$reviews         = testimonials(3);
+$reviews         = reviews_for_display(3);
+$reviewSummary   = google_review_summary();
 $facets          = inventory_facets();
 $hero            = [
     'image'   => 'assets/img/hero/home.jpg',
@@ -26,7 +27,7 @@ require __DIR__ . '/includes/hero.php';
     <div class="hero-stats-inner">
         <div class="hero-stat"><i class="fa-solid fa-award"></i><div><strong data-count="<?= e(setting('years_experience', '9')) ?>" data-suffix="+"><?= e(setting('years_experience', '9')) ?>+</strong><span>Years in the business</span></div></div>
         <div class="hero-stat"><i class="fa-solid fa-key"></i><div><strong data-count="<?= (int) str_replace(',', '', setting('cars_sold', '1200')) ?>" data-suffix="+"><?= e(setting('cars_sold', '1,200')) ?>+</strong><span>Keys handed over</span></div></div>
-        <div class="hero-stat"><i class="fa-solid fa-star"></i><div><strong data-count="<?= e(setting('google_rating', '4.9')) ?>"><?= e(setting('google_rating', '4.9')) ?></strong><span>Google rating</span></div></div>
+        <div class="hero-stat"><i class="fa-solid fa-star"></i><div><strong data-count="<?= e($reviewSummary['rating_label']) ?>"><?= e($reviewSummary['rating_label']) ?></strong><span translate="no">Google Maps rating</span></div></div>
         <div class="hero-stat"><i class="fa-solid fa-shield-halved"></i><div><strong>$0</strong><span>Admin or hidden fees</span></div></div>
     </div>
 </div>
@@ -123,24 +124,18 @@ require __DIR__ . '/includes/hero.php';
                 <h2 class="section-title">What drivers say</h2>
             </div>
             <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="rating-summary" style="background:#fff;border-color:#e3e4e9"><i class="fa-brands fa-google fa-lg" style="color:#4285f4"></i><div><strong style="color:#121216"><?= e(setting('google_rating', '4.9')) ?></strong> <span style="color:#5b5e66">/ 5 on Google</span></div></div>
+                <a class="rating-summary" style="background:#fff;border-color:#e3e4e9" href="<?= e($reviewSummary['maps_url']) ?>" target="_blank" rel="noopener"><i class="fa-brands fa-google fa-lg" style="color:#4285f4"></i><div><strong style="color:#121216"><?= e($reviewSummary['rating_label']) ?></strong> <span style="color:#5b5e66">/ 5<?= $reviewSummary['count'] ? ' · ' . number($reviewSummary['count']) . ' reviews' : '' ?></span></div></a>
                 <a href="<?= url('testimonials') ?>" class="btn btn-paper">All reviews</a>
             </div>
         </div>
         <div class="row g-4">
             <?php foreach ($reviews as $i => $t): ?>
                 <div class="col-md-4 reveal reveal-delay-<?= $i + 1 ?>">
-                    <div class="testimonial-card">
-                        <?= stars($t['rating']) ?>
-                        <p class="testimonial-quote mt-3">"<?= e($t['quote']) ?>"</p>
-                        <div class="testimonial-meta">
-                            <span class="testimonial-avatar"><?= e(initials($t['name'])) ?></span>
-                            <div><strong><?= e($t['name']) ?></strong><span><?= e($t['location']) ?><?= $t['vehicle'] ? ' · ' . e($t['vehicle']) : '' ?></span></div>
-                        </div>
-                    </div>
+                    <?php $reviewExcerpt = 280; require __DIR__ . '/includes/review-card.php'; ?>
                 </div>
             <?php endforeach; ?>
         </div>
+        <?php if (reviews_are_from_google($reviews)): ?><p class="google-review-notice"><span class="gmp-attribution" translate="no">Google Maps</span> selects and orders these reviews by relevance. <a href="<?= e($reviewSummary['maps_url']) ?>" target="_blank" rel="noopener">View all <?= number($reviewSummary['count']) ?> reviews</a>.</p><?php endif; ?>
     </div>
 </section>
 <?php endif; ?>

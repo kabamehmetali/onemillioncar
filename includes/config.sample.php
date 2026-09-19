@@ -19,3 +19,7 @@ define('CLEAN_URLS', true);
 
 // Show PHP errors on screen. Keep false in production.
 define('APP_DEBUG', true);
+
+// Used server-side to load the business rating and Google reviews.
+// Restrict this key to the Places API in Google Cloud Console.
+define('GOOGLE_MAPS_API_KEY', '');

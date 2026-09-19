@@ -599,6 +599,132 @@ function testimonials(int $limit = 0): array
     return db_all($sql . ($limit > 0 ? ' LIMIT ' . (int) $limit : ''));
 }
 
+/**
+ * Fetch the current rating and reviews directly from Google Places (New).
+ *
+ * Google permits Place IDs to be stored, but not Places content such as ratings
+ * and reviews, so this intentionally uses only a per-request memory cache.
+ * A failed request is logged and callers fall back to the local testimonials.
+ *
+ * @return array{name:string,rating:float,review_count:int,maps_url:string,reviews:array<int,array<string,mixed>>}|null
+ */
+function google_place_details(): ?array
+{
+    static $loaded = false;
+    static $place  = null;
+
+    if ($loaded) {
+        return $place;
+    }
+    $loaded = true;
+
+    $apiKey  = defined('GOOGLE_MAPS_API_KEY') ? trim((string) GOOGLE_MAPS_API_KEY) : '';
+    $placeId = setting('google_place_id', 'ChIJEewRRSE_K4gRxGGdUH3Tc58');
+    if ($apiKey === '' || $placeId === '' || !function_exists('curl_init')) {
+        return null;
+    }
+
+    $url = 'https://places.googleapis.com/v1/places/' . rawurlencode($placeId)
+         . '?languageCode=en&regionCode=CA';
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_TIMEOUT        => 6,
+        CURLOPT_HTTPHEADER     => [
+            'X-Goog-Api-Key: ' . $apiKey,
+            'X-Goog-FieldMask: displayName,rating,userRatingCount,reviews,googleMapsLinks.reviewsUri,googleMapsUri',
+        ],
+    ]);
+    $body   = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $error  = curl_error($ch);
+
+    if ($body === false || $status !== 200) {
+        error_log('[google-reviews] Place Details failed (HTTP ' . $status . ')' . ($error !== '' ? ': ' . $error : ''));
+        return null;
+    }
+
+    $data = json_decode($body, true);
+    if (!is_array($data)) {
+        error_log('[google-reviews] Place Details returned invalid JSON.');
+        return null;
+    }
+
+    $reviews = [];
+    foreach (($data['reviews'] ?? []) as $review) {
+        if (!is_array($review)) {
+            continue;
+        }
+        // Use the author's original words. This avoids silently presenting a
+        // machine translation as the reviewer's own English text.
+        $text   = trim((string) ($review['originalText']['text'] ?? $review['text']['text'] ?? ''));
+        $author = $review['authorAttribution'] ?? [];
+        $name   = trim((string) ($author['displayName'] ?? 'Google Maps user'));
+        if ($text === '') {
+            continue;
+        }
+        $reviews[] = [
+            'name'          => $name !== '' ? $name : 'Google Maps user',
+            'location'      => trim((string) ($review['relativePublishTimeDescription'] ?? '')),
+            'vehicle'       => '',
+            'rating'        => max(1, min(5, (int) round((float) ($review['rating'] ?? 5)))),
+            'quote'         => $text,
+            'source'        => 'google',
+            'profile_url'   => filter_var($author['uri'] ?? '', FILTER_VALIDATE_URL) ? (string) $author['uri'] : '',
+            'avatar_url'    => filter_var($author['photoUri'] ?? '', FILTER_VALIDATE_URL) ? (string) $author['photoUri'] : '',
+            'review_url'    => filter_var($review['googleMapsUri'] ?? '', FILTER_VALIDATE_URL) ? (string) $review['googleMapsUri'] : '',
+            'published_at'  => (string) ($review['publishTime'] ?? ''),
+        ];
+    }
+
+    $mapsUrl = setting('google_maps_url');
+    foreach ([$data['googleMapsLinks']['reviewsUri'] ?? '', $data['googleMapsUri'] ?? ''] as $candidateUrl) {
+        if (filter_var($candidateUrl, FILTER_VALIDATE_URL)) {
+            $mapsUrl = (string) $candidateUrl;
+            break;
+        }
+    }
+    $place = [
+        'name'         => trim((string) ($data['displayName']['text'] ?? site_name())),
+        'rating'       => max(0, min(5, (float) ($data['rating'] ?? 0))),
+        'review_count' => max(0, (int) ($data['userRatingCount'] ?? 0)),
+        'maps_url'     => $mapsUrl,
+        'reviews'      => $reviews,
+    ];
+    return $place;
+}
+
+/** @return array<int,array<string,mixed>> */
+function reviews_for_display(int $limit = 0): array
+{
+    $place   = google_place_details();
+    $reviews = $place['reviews'] ?? [];
+    if (!$reviews) {
+        return testimonials($limit);
+    }
+    return $limit > 0 ? array_slice($reviews, 0, $limit) : $reviews;
+}
+
+/** @return array{rating:float,rating_label:string,count:int,maps_url:string,live:bool} */
+function google_review_summary(): array
+{
+    $place  = google_place_details();
+    $rating = $place !== null ? (float) $place['rating'] : (float) setting('google_rating', '4.9');
+    return [
+        'rating'       => $rating,
+        'rating_label' => number_format($rating, 1),
+        'count'        => $place !== null ? (int) $place['review_count'] : 0,
+        'maps_url'     => $place !== null && $place['maps_url'] !== '' ? $place['maps_url'] : setting('google_maps_url'),
+        'live'         => $place !== null,
+    ];
+}
+
+function reviews_are_from_google(array $reviews): bool
+{
+    return $reviews !== [] && ($reviews[0]['source'] ?? '') === 'google';
+}
+
 function faqs(): array
 {
     return db_all('SELECT * FROM faqs WHERE is_published = 1 ORDER BY sort_order ASC, id ASC');

@@ -27,6 +27,7 @@ $groups = [
         'hours_saturday'   => ['Hours — Saturday', 'text', ''],
         'hours_sunday'     => ['Hours — Sunday', 'text', ''],
         'google_maps_url'  => ['Google Maps directions URL', 'url', 'The public Share link used by Get directions links.'],
+        'google_place_id'  => ['Google Place ID', 'text', 'Used with the server-side Places API to show the live rating and review comments.'],
         'google_maps_embed'=> ['Google Maps embed URL', 'url', 'From Google Maps → Share → Embed a map, copy only the src="…" URL. Leave blank to hide the map.'],
     ]],
     'social' => ['Social', [

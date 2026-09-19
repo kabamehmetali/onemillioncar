@@ -24,6 +24,11 @@ Website and admin panel for a car sales consultant. Plain PHP 8, MySQL, Bootstra
 - **Account** → change the password.
 - **Settings → Business** → your name, title and bio.
 - **Settings → Contact** → phone, WhatsApp, email, notification email, address, hours, map.
+- **Google reviews** → enable Places API (New) for your Google Cloud project and
+  set `GOOGLE_MAPS_API_KEY` in the git-ignored `includes/config.php`. The Place
+  ID is managed under **Settings → Contact**. The public review sections request
+  the current rating and Google-selected reviews directly, with local
+  testimonials as a fallback if Google is unavailable.
 - **Vehicles** → replace the generated placeholder photos with real ones.
 - **Settings → SMS alerts** → paste the Twilio Account SID, Auth Token and phone
   number, enter the mobile number to alert, switch it on, then use *Save & send
